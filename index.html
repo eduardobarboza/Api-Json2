@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de Produtos</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <form id="formUpdate" class="formUpdate">
+      <input type="text" disabled id="formI" />
+      <input
+        type="text"
+        name="name"
+        id="formN"
+        placeholder="Nome do Produto"
+        required
+      /><br />
+      <input
+        type="number"
+        name="price"
+        id="formV"
+        placeholder="Valor do Produto"
+        step="0.01"
+        required
+      /><br />
+      <input
+        type="number"
+        name="quantity"
+        id="formQ"
+        placeholder="Quantidade em Estoque"
+        required
+      /><br />
+      <div class="file_div">
+        <input
+          type="file"
+          onchange="loadFileU(event)"
+          name="photo"
+          id="fotoU"
+          accept="image/*"
+        />
+        <img id="outputU" id="formF" class="img_preview" />
+      </div>
+      <br />
+      <input type="submit" value="Atualizar Produto" />
+    </form>
+    <div class="container">
+      <h1>Cadastro de Produtos</h1>
+      <form id="formProduto">
+        <input
+          type="text"
+          name="name"
+          placeholder="Nome do Produto"
+          required
+        /><br />
+        <input
+          type="number"
+          name="price"
+          placeholder="Valor do Produto"
+          step="0.01"
+          required
+        /><br />
+        <input
+          type="number"
+          name="quantity"
+          placeholder="Quantidade em Estoque"
+          required
+        /><br />
+        <div class="file_div">
+          <input
+            type="file"
+            onchange="loadFile(event)"
+            name="photo"
+            id="foto"
+            accept="image/*"
+            required
+          />
+          <img id="output" class="img_preview" />
+        </div>
+        <br />
+        <input type="submit" value="Cadastrar Produto" />
+      </form>
+      <table id="tabelaProduto">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nome</th>
+            <th>Valor</th>
+            <th>Quantidade</th>
+            <th>Foto</th>
+            <th>Alterar/Excluir</th>
+          </tr>
+        </thead>
+        <tbody>
+  
+        </tbody>
+      </table>
+    </div>
+    <script src="funcao.js"></script>
+    <script>
+      const form = document.getElementById("formProduto");
+      const tableBody = document.querySelector("#tabelaProduto tbody");
+
+      var loadFile = function (event) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var output = document.getElementById("output");
+          output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      };
+
+      function encodeImageFileAsURL(element) {
+        var file = element.files[0];
+        var reader = new FileReader();
+        try {
+          reader.onloadend = function () {
+            console.log("RESULT", reader.result);
+            return reader.result;
+          };
+          reader.readAsDataURL(file);
+        } catch {
+          return "";
+        }
+      }
+      var loadFileU = function (event) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var output = document.getElementById("outputU");
+          output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      };
+
+      function encodeImageFileAsURL(element) {
+        var file = element.files[0];
+        var reader = new FileReader();
+        try {
+          reader.onloadend = function () {
+            console.log("RESULT", reader.result);
+            return reader.result;
+          };
+          reader.readAsDataURL(file);
+        } catch {
+          return "";
+        }
+      }
+
+      const getProdutos = async () => {
+        const options = {
+          method: "GET",
+          headers: { "User-Agent": "insomnia/2023.5.8" },
+        };
+
+        let data;
+
+        await fetch("http://localhost:3000/produto", options)
+          .then((response) => response.json())
+          .then((response) => (data = response))
+          .catch((err) => console.error(err));
+
+        data.forEach((e) => {
+          const newRow = document.createElement("tr");
+          let produto = {
+            nome: e.nome,
+            quantidade: e.quantidade,
+            valor: e.valor,
+            foto: e.foto,
+          };
+          newRow.innerHTML = `
+                      <td>${e.id}</td>
+                      <td>${e.nome}</td>
+                      <td>${e.valor}</td>
+                      <td>${e.quantidade}</td>
+                      <td><img src=${e.foto} alt="Product Image" /></td>
+                      <td>
+                        <button class="btnA" onclick="alterar('${e.id}', '${e.nome}', '${e.quantidade}', '${e.valor}', '${e.foto}')">Alterar</button>
+                        <button class="btnR" onclick="removeProduto('${e.id}')">Remover</button>
+                      </td>
+                  `;
+          tableBody.appendChild(newRow);
+        });
+      };
+
+      getProdutos();
+      document
+        .getElementById("formProduto")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const formData = new FormData(this);
+
+          const newRow = document.createElement("tr");
+          let produto = {
+            nome: formData.get("name"),
+            quantidade: formData.get("quantity"),
+            valor: formData.get("price"),
+            foto: document.querySelector("#output").src,
+          
+          };
+         
+
+          post_Dados("http://localhost:3000/produto", produto).then((data) => {
+            newRow.innerHTML = `
+                      <td>${data.id}</td>
+                      <td>${data.nome}</td>
+                      <td>${data.quantidade}</td>
+                      <td>${data.valor}</td>
+                      <td><img src=${data.foto} alt="Product Image"></td>
+                      <td>
+                        <button class="btnA" onclick="alterar('${data.id}', '${data.nome}', '${data.quantidade}', '${data.valor}', '${data.foto}')">Alterar</button>
+                        <button class="btnR" onclick="removeProduto('${data.id}')">Remover</button>
+                      </td>
+                  `;
+          });
+
+          tableBody.appendChild(newRow);
+
+   
+        });
+
+      const removeProduto = async (id, row) => {
+        const options = {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "insomnia/2023.5.8",
+          },
+          body: "false",
+        };
+
+        return await fetch(`http://localhost:3000/produto/${id}`, options)
+          .then((response) => response.json())
+          .then((response) => {
+            location.reload();
+          })
+          .catch((err) => console.error(err));
+      };
+
+      const alterar = (id, nome, quantidade, valor, foto = "") => {
+        document.getElementById("formUpdate").style.display = "block";
+        document.querySelector("#formN").value = nome;
+        document.querySelector("#formI").value = id;
+        document.querySelector("#formV").value = quantidade;
+        document.querySelector("#formQ").value = valor;
+        document.querySelector("#outputU").src = foto;
+      };
+
+      document.getElementById("formUpdate").addEventListener("submit", e => {
+        e.preventDefault();
+        updateProduto(
+          document.querySelector("#formI").value,
+          document.querySelector("#formN").value,
+          document.querySelector("#formV").value,
+          document.querySelector("#formQ").value,
+          document.querySelector("#outputU").src
+        );
+      });
+
+      const updateProduto = async (id, nome, quantidade, valor, foto) => {
+        const options = {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "insomnia/2023.5.8",
+          },
+          body: JSON.stringify({"nome":nome,"quantidade": quantidade,"valor": valor,"foto": foto})
+        };
+
+        await fetch(`http://localhost:3000/produto/${id}`, options)
+          .then((response) => response.json())
+          .then((response) => location.reload())
+          .catch((err) => console.error(err));
+      };
+    </script>
+  </body>
+</html>
